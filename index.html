@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIForge - Pembangun Aplikasi AI Instan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .preview-container { height: calc(100vh - 180px); min-height: 500px; }
+        .sidebar-scroll { max-height: calc(100vh - 100px); overflow-y: auto; }
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .canvas-dot { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
+        .node-enter { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Top Navigation -->
+    <nav class="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
+        <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 shadow-lg shadow-indigo-200">
+                        <i class="fa-solid fa-wand-magic-sparkles text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold tracking-tight text-slate-900">AI<span class="text-indigo-600">Forge</span></span>
+                        <p class="text-[10px] text-slate-500 font-medium uppercase tracking-widest leading-none">Studio Builder</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="togglePreviewMode()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">
+                        <i class="fa-solid fa-eye mr-2"></i>Preview
+                    </button>
+                    <button onclick="exportCode()" class="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all">
+                        <i class="fa-solid fa-code"></i> Ekspor Kode
+                    </button>
+                    <div class="w-8 h-8 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center overflow-hidden">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex h-[calc(100vh-64px)] overflow-hidden">
+        <!-- Sidebar Left: Components -->
+        <aside class="w-72 bg-white border-r border-slate-200 hidden lg:block sidebar-scroll">
+            <div class="p-6">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Komponen UI</h3>
+                <div class="space-y-3">
+                    <div draggable="true" ondragstart="drag(event)" data-type="header" class="group flex items-center p-3 border border-slate-100 rounded-xl hover:border-indigo-200 hover:bg-indigo-50/30 cursor-grab active:cursor-grabbing transition-all">
+                        <div class="w-10 h-10 rounded-lg bg-slate-100 group-hover:bg-indigo-100 flex items-center justify-center mr-3 transition-colors">
+                            <i class="fa-solid fa-window-maximize text-slate-500 group-hover:text-indigo-600"></i>
+                        </div>
+                        <span class="text-sm font-medium text-slate-700">Header Hero</span>
+                    </div>
+                    <div draggable="true" ondragstart="drag(event)" data-type="card" class="group flex items-center p-3 border border-slate-100 rounded-xl hover:border-indigo-200 hover:bg-indigo-50/30 cursor-grab active:cursor-grabbing transition-all">
+                        <div class="w-10 h-10 rounded-lg bg-slate-100 group-hover:bg-indigo-100 flex items-center justify-center mr-3 transition-colors">
+                            <i class="fa-solid fa-id-card text-slate-500 group-hover:text-indigo-600"></i>
+                        </div>
+                        <span class="text-sm font-medium text-slate-700">Kartu Fitur</span>
+                    </div>
+                    <div draggable="true" ondragstart="drag(event)" data-type="form" class="group flex items-center p-3 border border-slate-100 rounded-xl hover:border-indigo-200 hover:bg-indigo-50/30 cursor-grab active:cursor-grabbing transition-all">
+                        <div class="w-10 h-10 rounded-lg bg-slate-100 group-hover:bg-indigo-100 flex items-center justify-center mr-3 transition-colors">
+                            <i class="fa-solid fa-list-check text-slate-500 group-hover:text-indigo-600"></i>
+                        </div>
+                        <span class="text-sm font-medium text-slate-700">Formulir Input</span>
+                    </div>
+                    <div draggable="true" ondragstart="drag(event)" data-type="footer" class="group flex items-center p-3 border border-slate-100 rounded-xl hover:border-indigo-200 hover:bg-indigo-50/30 cursor-grab active:cursor-grabbing transition-all">
+                        <div class="w-10 h-10 rounded-lg bg-slate-100 group-hover:bg-indigo-100 flex items-center justify-center mr-3 transition-colors">
+                            <i class="fa-solid fa-shoe-prints text-slate-500 group-hover:text-indigo-600"></i>
+                        </div>
+                        <span class="text-sm font-medium text-slate-700">Footer</span>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Preset Tema</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="changeTheme('indigo')" class="h-8 rounded-md bg-indigo-600 hover:ring-2 ring-indigo-300 ring-offset-1"></button>
+                        <button onclick="changeTheme('emerald')" class="h-8 rounded-md bg-emerald-600 hover:ring-2 ring-emerald-300 ring-offset-1"></button>
+                        <button onclick="changeTheme('rose')" class="h-8 rounded-md bg-rose-600 hover:ring-2 ring-rose-300 ring-offset-1"></button>
+                        <button onclick="changeTheme('slate')" class="h-8 rounded-md bg-slate-800 hover:ring-2 ring-slate-400 ring-offset-1"></button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <div class="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+            <!-- AI Command Bar -->
+            <div class="p-4 bg-white border-b border-slate-200">
+                <div class="max-w-3xl mx-auto relative">
+                    <input type="text" id="aiInput" 
+                        placeholder="Contoh: 'Buat aplikasi To-Do List modern' atau 'Buat landing page portofolio'"
+                        class="w-full pl-12 pr-32 py-3 bg-slate-100 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 text-sm transition-all shadow-inner">
+                    <i class="fa-solid fa-sparkles absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500"></i>
+                    <button onclick="generateAI()" 
+                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all shadow-sm">
+                        Generate <i class="fa-solid fa-bolt ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas -->
+            <div class="flex-1 p-8 overflow-y-auto canvas-dot relative">
+                <div id="loadingOverlay" class="absolute inset-0 bg-white/60 z-10 hidden flex-col items-center justify-center backdrop-blur-sm">
+                    <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+                    <p class="text-indigo-900 font-semibold animate-pulse">AI sedang merancang aplikasimu...</p>
+                    <p class="text-slate-500 text-sm">Menyusun layout, mengoptimasi aset, dan menulis kode.</p>
+                </div>
+
+                <div id="appCanvas" ondrop="drop(event)" ondragover="allowDrop(event)"
+                    class="max-w-4xl mx-auto min-h-full bg-white rounded-2xl shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                    <!-- Default Placeholder -->
+                    <div id="canvasPlaceholder" class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                        <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+                            <i class="fa-solid fa-layer-group text-3xl text-indigo-600"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">Kanvas Kosong</h2>
+                        <p class="text-slate-500 max-w-sm">Gunakan bar AI di atas untuk membuat aplikasi secara otomatis atau tarik komponen dari sidebar kiri.</p>
+                    </div>
+                    <div id="canvasContent" class="hidden flex-1 flex flex-col"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Right: Properties -->
+        <aside class="w-80 bg-white border-l border-slate-200 hidden xl:block p-6">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-6">Properti Proyek</h3>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Nama Aplikasi</label>
+                    <input type="text" id="appNameInput" value="Aplikasi Saya" oninput="updateProjectMeta()"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm outline-none">
+                </div>
+                
+                <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fa-solid fa-circle-info text-indigo-600"></i>
+                        <span class="text-xs font-bold text-indigo-900 uppercase">Statistik AI</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-indigo-700">
+                        <span>Komponen AI:</span>
+                        <span id="compCount" class="font-mono font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-indigo-700 mt-1">
+                        <span>Waktu Bangun:</span>
+                        <span id="buildTime" class="font-mono font-bold">0s</span>
+                    </div>
+                </div>
+
+                <hr class="border-slate-100">
+
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Pengaturan Global</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600">Mode Responsif</span>
+                        <div class="w-10 h-5 bg-indigo-600 rounded-full relative cursor-pointer">
+                            <div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600">Optimasi Gambar</span>
+                        <div class="w-10 h-5 bg-slate-200 rounded-full relative cursor-pointer">
+                            <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pt-10">
+                    <button onclick="resetCanvas()" class="w-full py-2.5 text-sm font-medium text-rose-600 border border-rose-100 rounded-xl hover:bg-rose-50 transition-colors">
+                        <i class="fa-solid fa-trash-can mr-2"></i> Bersihkan Semua
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Success Modal -->
+    <div id="exportModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-check-double text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900">Aplikasi Berhasil Diekspor!</h3>
+                <p class="text-slate-500 mt-2">Kode sumber HTML Anda telah siap. Anda dapat menyalinnya atau mengunduhnya untuk langsung digunakan.</p>
+                <div class="mt-6 bg-slate-900 rounded-xl p-4 text-left">
+                    <pre class="text-emerald-400 text-xs overflow-x-auto"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;body&gt;
+  &lt;h1&gt;Halo Dunia!&lt;/h1&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button onclick="closeModal()" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 transition-colors">Tutup</button>
+                    <button class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">Unduh .zip</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTheme = 'indigo';
+        const canvasContent = document.getElementById('canvasContent');
+        const canvasPlaceholder = document.getElementById('canvasPlaceholder');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const compCountEl = document.getElementById('compCount');
+        const buildTimeEl = document.getElementById('buildTime');
+
+        // Drag and Drop Logic
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("type", ev.currentTarget.getAttribute('data-type'));
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const type = ev.dataTransfer.getData("type");
+            addComponent(type);
+        }
+
+        function addComponent(type) {
+            canvasPlaceholder.classList.add('hidden');
+            canvasContent.classList.remove('hidden');
+            
+            const component = createComponentElement(type);
+            canvasContent.appendChild(component);
+            updateStats();
+        }
+
+        function createComponentElement(type) {
+            const div = document.createElement('div');
+            div.className = "group relative border-b border-transparent hover:border-indigo-400/30 transition-all node-enter";
+            
+            let content = '';
+            const themeColor = {
+                'indigo': 'indigo-600',
+                'emerald': 'emerald-600',
+                'rose': 'rose-600',
+                'slate': 'slate-800'
+            }[currentTheme];
+
+            const btnTheme = {
+                'indigo': 'bg-indigo-600 hover:bg-indigo-700',
+                'emerald': 'bg-emerald-600 hover:bg-emerald-700',
+                'rose': 'bg-rose-600 hover:bg-rose-700',
+                'slate': 'bg-slate-800 hover:bg-slate-900'
+            }[currentTheme];
+
+            if(type === 'header') {
+                content = `
+                    <div class="py-16 px-8 text-center bg-white">
+                        <h1 class="text-4xl font-extrabold text-slate-900 mb-4">Selamat Datang di <span class="text-${themeColor}">${document.getElementById('appNameInput').value}</span></h1>
+                        <p class="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">Solusi cerdas untuk kebutuhan digital masa depan Anda. Dibangun dengan presisi dan dedikasi.</p>
+                        <button class="px-8 py-3 ${btnTheme} text-white rounded-full font-bold shadow-lg transition-transform active:scale-95">Mulai Sekarang</button>
+                    </div>
+                `;
+            } else if(type === 'card') {
+                content = `
+                    <div class="py-12 px-8 grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="w-12 h-12 bg-indigo-50 text-${themeColor} rounded-xl flex items-center justify-center mb-4"><i class="fa-solid fa-rocket text-xl"></i></div>
+                            <h3 class="font-bold text-slate-900 mb-2">Performa Cepat</h3>
+                            <p class="text-sm text-slate-500">Aplikasi dioptimasi untuk kecepatan maksimal di setiap perangkat.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="w-12 h-12 bg-indigo-50 text-${themeColor} rounded-xl flex items-center justify-center mb-4"><i class="fa-solid fa-shield-halved text-xl"></i></div>
+                            <h3 class="font-bold text-slate-900 mb-2">Keamanan Berlapis</h3>
+                            <p class="text-sm text-slate-500">Privasi data pengguna adalah prioritas utama sistem kami.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="w-12 h-12 bg-indigo-50 text-${themeColor} rounded-xl flex items-center justify-center mb-4"><i class="fa-solid fa-gears text-xl"></i></div>
+                            <h3 class="font-bold text-slate-900 mb-2">Kustomisasi Luas</h3>
+                            <p class="text-sm text-slate-500">Sesuaikan setiap aspek sesuai dengan identitas brand Anda.</p>
+                        </div>
+                    </div>
+                `;
+            } else if(type === 'form') {
+                content = `
+                    <div class="py-12 px-8 bg-white max-w-xl mx-auto w-full">
+                        <div class="bg-slate-50 p-8 rounded-3xl border border-slate-200">
+                            <h2 class="text-xl font-bold mb-6">Hubungi Kami</h2>
+                            <div class="space-y-4">
+                                <div><label class="block text-xs font-bold text-slate-400 uppercase mb-2">Nama Lengkap</label>
+                                <input type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-${themeColor}/20 focus:border-${themeColor}" placeholder="John Doe"></div>
+                                <div><label class="block text-xs font-bold text-slate-400 uppercase mb-2">Alamat Email</label>
+                                <input type="email" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-${themeColor}/20 focus:border-${themeColor}" placeholder="john@example.com"></div>
+                                <button class="w-full py-3 ${btnTheme} text-white rounded-xl font-bold mt-2">Kirim Pesan</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if(type === 'footer') {
+                content = `
+                    <footer class="py-10 px-8 border-t border-slate-100 bg-white">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-${themeColor} flex items-center justify-center text-white"><i class="fa-solid fa-wand-magic-sparkles text-xs"></i></div>
+                                <span class="font-bold text-slate-900">${document.getElementById('appNameInput').value}</span>
+                            </div>
+                            <div class="flex gap-6 text-sm text-slate-500">
+                                <a href="#" class="hover:text-${themeColor}">Tentang</a>
+                                <a href="#" class="hover:text-${themeColor}">Layanan</a>
+                                <a href="#" class="hover:text-${themeColor}">Kontak</a>
+                            </div>
+                            <p class="text-xs text-slate-400">© 2023 Forge AI. Hak Cipta Dilindungi.</p>
+                        </div>
+                    </footer>
+                `;
+            } else if(type === 'todo') {
+                content = `
+                    <div class="py-12 px-8 bg-slate-50 flex-1">
+                        <div class="max-w-md mx-auto bg-white rounded-3xl shadow-xl p-8">
+                            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-${themeColor}"></i> Tugas Hari Ini
+                            </h2>
+                            <div class="flex gap-2 mb-6">
+                                <input type="text" class="flex-1 px-4 py-2 border-b-2 border-slate-100 focus:border-${themeColor} outline-none" placeholder="Tambah tugas...">
+                                <button class="w-10 h-10 ${btnTheme} text-white rounded-full flex items-center justify-center shadow-lg"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                                    <div class="w-5 h-5 border-2 border-slate-300 rounded-md"></div>
+                                    <span class="text-slate-600">Pelajari Tailwind CSS</span>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl opacity-60">
+                                    <div class="w-5 h-5 bg-${themeColor} rounded-md flex items-center justify-center text-white"><i class="fa-solid fa-check text-[10px]"></i></div>
+                                    <span class="text-slate-600 line-through">Bangun Prototipe AI</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            div.innerHTML = content + `
+                <div class="absolute right-4 top-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="this.closest('.group').remove(); updateStats();" class="w-8 h-8 bg-white shadow-md border border-rose-100 text-rose-500 rounded-lg hover:bg-rose-50 transition-colors">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </div>
+            `;
+            return div;
+        }
+
+        function generateAI() {
+            const prompt = document.getElementById('aiInput').value.toLowerCase();
+            if(!prompt) return alert('Silakan masukkan deskripsi aplikasi!');
+
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.add('flex');
+
+            // Simulate AI Processing Time
+            setTimeout(() => {
+                resetCanvas();
+                canvasPlaceholder.classList.add('hidden');
+                canvasContent.classList.remove('hidden');
+
+                const startTime = Date.now();
+
+                if(prompt.includes('todo') || prompt.includes('tugas') || prompt.includes('list')) {
+                    addComponent('header');
+                    addComponent('todo');
+                    addComponent('footer');
+                } else if(prompt.includes('landing') || prompt.includes('produk') || prompt.includes('promo')) {
+                    addComponent('header');
+                    addComponent('card');
+                    addComponent('form');
+                    addComponent('footer');
+                } else if(prompt.includes('kontak') || prompt.includes('hubungi')) {
+                    addComponent('header');
+                    addComponent('form');
+                    addComponent('footer');
+                } else {
+                    // Default generic app
+                    addComponent('header');
+                    addComponent('card');
+                    addComponent('footer');
+                }
+
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+                
+                const endTime = Date.now();
+                buildTimeEl.innerText = ((endTime - startTime) / 100).toFixed(2) + 's';
+                
+                // Show floating notification
+                const toast = document.createElement('div');
+                toast.className = "fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl z-[100] animate-bounce flex items-center gap-3";
+                toast.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i> AI telah membangun aplikasi Anda!`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+
+            }, 2000);
+        }
+
+        function changeTheme(theme) {
+            currentTheme = theme;
+            const components = canvasContent.children;
+            if(components.length > 0) {
+                // Refresh components to apply theme
+                const types = [];
+                for(let child of components) {
+                    if(child.querySelector('h1')) types.push('header');
+                    else if(child.querySelector('.grid-cols-3')) types.push('card');
+                    else if(child.querySelector('form') || child.querySelector('label')) types.push('form');
+                    else if(child.querySelector('footer')) types.push('footer');
+                    else if(child.querySelector('.fa-list-check')) types.push('todo');
+                }
+                resetCanvas();
+                types.forEach(t => addComponent(t));
+            }
+        }
+
+        function resetCanvas() {
+            canvasContent.innerHTML = '';
+            canvasContent.classList.add('hidden');
+            canvasPlaceholder.classList.remove('hidden');
+            updateStats();
+        }
+
+        function updateStats() {
+            compCountEl.innerText = canvasContent.children.length;
+        }
+
+        function updateProjectMeta() {
+            const name = document.getElementById('appNameInput').value;
+            // Update any dynamic text if needed
+        }
+
+        function exportCode() {
+            const modal = document.getElementById('exportModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('exportModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function togglePreviewMode() {
+            const canvas = document.getElementById('appCanvas');
+            canvas.classList.toggle('max-w-4xl');
+            canvas.classList.toggle('max-w-full');
+            canvas.classList.toggle('m-0');
+        }
+
+        // Initialize empty state
+        updateStats();
+    </script>
+</body>
+</html></html>
